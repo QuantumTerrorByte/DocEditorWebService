@@ -1,31 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Projects\\MVCLab\\WordWebApplication\\WordWebApplication\\WordWebApplication.csproj": {}
+    "D:\\Projects\\WordWebService\\WordWebApplication\\WordWebApplication.csproj": {}
   },
   "projects": {
-    "D:\\Projects\\MVCLab\\WordWebApplication\\WordWebApplication\\WordWebApplication.csproj": {
+    "D:\\Projects\\WordWebService\\WordWebApplication\\WordWebApplication.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Projects\\MVCLab\\WordWebApplication\\WordWebApplication\\WordWebApplication.csproj",
+        "projectUniqueName": "D:\\Projects\\WordWebService\\WordWebApplication\\WordWebApplication.csproj",
         "projectName": "WordWebApplication",
-        "projectPath": "D:\\Projects\\MVCLab\\WordWebApplication\\WordWebApplication\\WordWebApplication.csproj",
+        "projectPath": "D:\\Projects\\WordWebService\\WordWebApplication\\WordWebApplication.csproj",
         "packagesPath": "C:\\Users\\Dragunov\\.nuget\\packages\\",
-        "outputPath": "D:\\Projects\\MVCLab\\WordWebApplication\\WordWebApplication\\obj\\",
+        "outputPath": "D:\\Projects\\WordWebService\\WordWebApplication\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "D:\\Programs\\Microsoft\\Tools\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Dragunov\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Dragunov\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net5.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -44,6 +38,26 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[5.0.14, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[5.0.14, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[5.0.14, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[5.0.14, )"
+            },
             "Syncfusion.EJ2.WordEditor.AspNet.Core": {
               "target": "Package",
               "version": "[19.4.0.52, )"
