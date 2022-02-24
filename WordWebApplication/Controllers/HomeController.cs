@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -30,80 +27,94 @@ namespace WordWebApplication.Controllers
         }
 
         [HttpPost]
-        [Route("GetFile")]
-        public async Task<string> GetFile(string fileName, string format) //todo ActionResult
+        [Route("ConvertFile")]
+        public IActionResult ConvertFile(IFormCollection data)
         {
-            var resultFile = await _dbContext.Files.FirstOrDefaultAsync(file => file.Name.Contains(fileName));
-            if (resultFile != null)
+            if (data?.Files?.Count > 0)
             {
+                Stream stream = new MemoryStream();
+                IFormFile file = data.Files[0];
+                int index = file.FileName.LastIndexOf('.');
+
+                string type = (index > -1 && index < file.FileName.Length - 1)
+                    ? file.FileName.Substring(index)
+                    : ".docx";
+                file.CopyTo(stream);
+                stream.Position = 0;
+
+                WordDocument document = WordDocument.Load(stream, GetFormatType(type.ToLower()));
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
+                document.Dispose();
+                return Ok(json);
+            }
+
+            HttpContext.Response.StatusCode = 500;
+            return BadRequest("No files in request. Make sure the file is no larger than 25 mb");
+        }
+
+        [HttpGet]
+        [Route("DownloadFile")]
+        public async Task<IActionResult> GetFile(string fileName)
+        {
+            try
+            {
+                var resultFile = await _dbContext.Files.FirstAsync(file => file.Name.Contains(fileName));
                 var mStream = new MemoryStream(resultFile.Blob);
                 WordDocument document = WordDocument.Load(mStream, GetFormatType(".docx")); //sfdt
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
                 document.Dispose();
-                return json;
+                return Ok(json);
             }
-            
-            return null;
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine(e);
+                return BadRequest($"File with name:{fileName} do not exist.");
+            }
+            catch (Exception e)
+            {
+                return BadRequest($"Db problems.");
+            }
         }
 
         [HttpPost]
         [Route("SaveFile")]
-        public async Task<IActionResult> SaveFile(SaveFileRequestModel saveFileRequestModel)
+        public async Task<IActionResult> SaveDbFile(IFormCollection fileForm)
         {
-            var data = saveFileRequestModel.Data;
-            if (data.Files.Count == 0) return null;
-
-            MemoryStream memoryStream = new MemoryStream();
-            IFormFile file = data.Files[0];
-            await file.CopyToAsync(memoryStream); //file in memory stream
-            memoryStream.Position = 0;
-
-            int index = file.FileName.LastIndexOf('.');
-            string type = (index > -1 && index < file.FileName.Length - 1) //todo docx only
-                ? file.FileName.Substring(index)
-                : ".docx";
-
-            try
+            var data = fileForm;
+            if (data.Files.Count > 0 && data.ContainsKey("fileName"))
             {
-                _dbContext.Files.Add(new FileModel()
+                MemoryStream memoryStream = new MemoryStream();
+                IFormFile file = data.Files[0];
+                await file.CopyToAsync(memoryStream); //file in memory stream
+                memoryStream.Position = 0;
+
+                int index = file.FileName.LastIndexOf('.');
+                string type = (index > -1 && index < file.FileName.Length - 1) //todo docx only
+                    ? file.FileName.Substring(index)
+                    : ".docx";
+
+                try
                 {
-                    Name = string.IsNullOrEmpty(saveFileRequestModel.Name)
-                        ? file.Name
-                        : saveFileRequestModel.Name, //todo check file name
-                    Blob = memoryStream.ToArray(),
-                });
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (Exception e)
-            {
-                return BadRequest($"Add file in to DB error(file name:{file.Name})");
+                    _dbContext.Files.Add(new FileModel()
+                    {
+                        Name = string.IsNullOrEmpty("fileName") ? file.Name : data["fileName"],
+                        Blob = memoryStream.ToArray(),
+                    });
+                    await _dbContext.SaveChangesAsync();
+                }
+                catch (Exception e)
+                {
+                    return BadRequest($"Add file in to DB error(file name:{file.Name})");
+                }
+
+                return Ok("File save successful");
             }
 
-            return Ok("Done");
+            return BadRequest("Request have no data.");
         }
 
-        [HttpPost]
-        [Route("Import")]
-        public string Import(IFormCollection data)
-        {
-            if (data.Files.Count == 0) return null;
-            Stream stream = new MemoryStream();
-            IFormFile file = data.Files[0];
-            int index = file.FileName.LastIndexOf('.');
 
-            string type = (index > -1 && index < file.FileName.Length - 1)
-                ? file.FileName.Substring(index)
-                : ".docx";
-            file.CopyTo(stream);
-            stream.Position = 0;
-
-            WordDocument document = WordDocument.Load(stream, GetFormatType(type.ToLower()));
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
-            document.Dispose();
-            return json;
-        }
-
-        private static FormatType GetFormatType(string format)
+        private FormatType GetFormatType(string format)
         {
             if (string.IsNullOrEmpty(format))
                 throw new NotSupportedException("EJ2 DocumentEditor does not support this file format.");
@@ -129,69 +140,5 @@ namespace WordWebApplication.Controllers
                     throw new NotSupportedException("EJ2 DocumentEditor does not support this file format.");
             }
         }
-
-        [HttpGet]
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [HttpGet]
-        [EnableCors]
-        [Route("Privacy")]
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel {RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier});
-        }
     }
 }
-
-/*
-[HttpPost]
-[Route("Import2")]
-public async Task<string> Import2(IFormCollection data)
-{
-    if (data.Files.Count == 0) return null;
-
-    MemoryStream memoryStream = new MemoryStream();
-    IFormFile file = data.Files[0];
-    file.CopyTo(memoryStream); //file in memory stream
-    memoryStream.Position = 0;
-
-    int index = file.FileName.LastIndexOf('.');
-    string type = (index > -1 && index < file.FileName.Length - 1)
-        ? file.FileName.Substring(index)
-        : ".docx";
-    // var path = Path.Combine(
-    //     @$"{_environment.ContentRootPath}/wwwroot/files/{DateTime.Now.ToFileTimeUtc()}{type}");
-    // using (FileStream fs = new FileStream(path, FileMode.Create)) {
-    //     var arr = stream.ToArray();
-    //     fs.Write(arr, 0, arr.Length);
-    // }
-
-    var result = _dbContext.Files.Add(new FileModel()
-    {
-        Name = file.Name,
-        Blob = memoryStream.ToArray(),
-    });
-    await _dbContext.SaveChangesAsync();
-
-    var resultFile = await _dbContext.Files.FirstOrDefaultAsync();
-    if (resultFile != null)
-    {
-        var mStream = new MemoryStream(resultFile.Blob);
-        WordDocument document = WordDocument.Load(mStream, GetFormatType(type.ToLower())); //sfdt
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
-        document.Dispose();
-        return json;
-    }
-
-    return null;
-    // return Ok("Done");
-}*/

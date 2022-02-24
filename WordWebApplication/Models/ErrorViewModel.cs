@@ -1,5 +1,3 @@
-using System;
-
 namespace WordWebApplication.Models
 {
     public class ErrorViewModel
