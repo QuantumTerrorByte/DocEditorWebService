@@ -64,11 +64,17 @@ namespace WordWebApplication
             services.AddDbContext<AppDbContext>(o =>
                 o.UseSqlServer("Server=NONAME;Database=docsEditorScaffold;User Id=sa;Password=sa"));
             services.AddTransient<AppDbContext, AppDbContext>();
-            services.AddCors();
             services.AddControllersWithViews();
+            services.AddRouting();
             services.AddMvc();
             services.AddCors(options =>
             {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
                 options.AddPolicy("AllowAllOrigins", builder =>
                 {
                     builder.AllowAnyOrigin()
@@ -80,10 +86,6 @@ namespace WordWebApplication
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseCors(builder => builder
-                .AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().DisallowCredentials()
-            );
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -96,12 +98,20 @@ namespace WordWebApplication
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); });
+            app.UseCors("AllowAllOrigins");
+            app.UseCors();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "Index",
+                    pattern: "/Index",
+                    defaults: new {controller = "Start", action = "Index",});
+            });
         }
     }
 

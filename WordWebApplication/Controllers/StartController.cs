@@ -13,19 +13,21 @@ using WordWebApplication.Models;
 namespace WordWebApplication.Controllers
 {
     [EnableCors]
-    public class HomeController : Controller
+    public class StartController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger<StartController> _logger;
         private readonly IHostEnvironment _environment;
         private readonly AppDbContext _dbContext;
 
-        public HomeController(ILogger<HomeController> logger, IHostEnvironment environment, AppDbContext dbContext)
+        public StartController(ILogger<StartController> logger, IHostEnvironment environment, AppDbContext dbContext)
         {
             _logger = logger;
             _environment = environment;
             _dbContext = dbContext;
         }
         
+        [EnableCors]
+        [Route("")]
         public IActionResult Index()
         {
             return View(_dbContext.DiagramsData);

@@ -75,8 +75,6 @@ D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\scopedcss\bundle\
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\WordWebApplication.TagHelpers.input.cache
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\WordWebApplication.TagHelpers.output.cache
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\WordWebApplication.RazorCoreGenerate.cache
-D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Home\Index.cshtml.g.cs
-D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Home\Privacy.cshtml.g.cs
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Shared\Error.cshtml.g.cs
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Shared\_Layout.cshtml.g.cs
 D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\_ViewImports.cshtml.g.cs
@@ -154,3 +152,6 @@ D:\Projects\WordWebService\WordWebApplication\bin\Debug\net5.0\NuGet.Frameworks.
 D:\Projects\WordWebService\WordWebApplication\bin\Debug\net5.0\System.Xml.XPath.XmlDocument.dll
 D:\Projects\WordWebService\WordWebApplication\bin\Debug\net5.0\Microsoft.Bcl.AsyncInterfaces.dll
 D:\Projects\WordWebService\WordWebApplication\bin\Debug\net5.0\Microsoft.OData.ModelBuilder.dll
+D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Start\Index.cshtml.g.cs
+D:\Projects\WordWebService\WordWebApplication\obj\Debug\net5.0\Razor\Views\Start\Privacy.cshtml.g.cs
+D:\Projects\WordWebService\WordWebApplication\bin\Debug\net5.0\App_Data\spellCheck.json

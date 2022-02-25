@@ -16,7 +16,7 @@ using WFormatType = Syncfusion.DocIO.FormatType;
 
 namespace WordWebApplication.Controllers
 {
-    [Route("api/[controller]")]
+    [EnableCors(PolicyName = "AllowAllOrigins")]
     public partial class DocumentEditorController : Controller
     {
         private readonly IHostEnvironment _hostingEnvironment;
@@ -65,7 +65,8 @@ namespace WordWebApplication.Controllers
                     spellChecker.CheckSuggestion, spellChecker.AddWord);
                 return Newtonsoft.Json.JsonConvert.SerializeObject(spellCheck);
             }
-            catch {
+            catch
+            {
                 return "{\"SpellCollection\":[],\"HasSpellingError\":false,\"Suggestions\":null}";
             }
         }
@@ -82,7 +83,8 @@ namespace WordWebApplication.Controllers
                 spellCheck.CheckSpelling(spellChecker.LanguageId, spellChecker.TexttoCheck);
                 return Newtonsoft.Json.JsonConvert.SerializeObject(spellCheck);
             }
-            catch{
+            catch
+            {
                 return "{\"SpellCollection\":[],\"HasSpellingError\":false,\"Suggestions\":null}";
             }
         }
@@ -97,7 +99,7 @@ namespace WordWebApplication.Controllers
             MemoryStream stream = new MemoryStream();
             stream.Write(data, 0, data.Length);
             stream.Position = 0;
-            
+
             try
             {
                 Syncfusion.DocIO.DLS.WordDocument document = new Syncfusion
@@ -120,7 +122,7 @@ namespace WordWebApplication.Controllers
             document1.Dispose();
             return sfdtText;
         }
-        
+
         [AcceptVerbs("Post")]
         [HttpPost]
         [EnableCors("AllowAllOrigins")]
@@ -202,6 +204,140 @@ namespace WordWebApplication.Controllers
             return json;
         }
 
+        [HttpPost]
+        [AcceptVerbs("Post")]
+        [EnableCors("AllowAllOrigins")]
+        [Route("Save")]
+        public void Save([FromBody] Models.DocumentEditorController.SaveParameter data)
+        {
+            string name = data.FileName;
+            string format = RetrieveFileType(name);
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "Document1.doc";
+            }
+
+            WDocument document = WordDocument.Save(data.Content);
+            FileStream fileStream = new FileStream(name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            document.Save(fileStream, GetWFormatType(format));
+            document.Close();
+            fileStream.Close();
+        }
+
+        [HttpPost]
+        [AcceptVerbs("Post")]
+        [EnableCors("AllowAllOrigins")]
+        [Route("ExportSFDT")]
+        public FileStreamResult ExportSfdt([FromBody] Models.DocumentEditorController.SaveParameter data)
+        {
+            string name = data.FileName;
+            string format = RetrieveFileType(name);
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "Document1.doc";
+            }
+
+            WDocument document = WordDocument.Save(data.Content);
+            return SaveDocument(document, format, name);
+        }
+
+        [AcceptVerbs("Post")]
+        [HttpPost]
+        [EnableCors("AllowAllOrigins")]
+        [Route("Export")]
+        public FileStreamResult Export(IFormCollection data)
+        {
+            if (data.Files.Count == 0)
+                return null;
+            string fileName = this.GetValue(data, "filename");
+            string name = fileName;
+            string format = RetrieveFileType(name);
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "Document1";
+            }
+
+            WDocument document = this.GetDocument(data);
+            return SaveDocument(document, format, fileName);
+        }
+
+        private string RetrieveFileType(string name)
+        {
+            int index = name.LastIndexOf('.');
+            string format = index > -1 && index < name.Length - 1 ? name.Substring(index) : ".doc";
+            return format;
+        }
+
+        private FileStreamResult SaveDocument(WDocument document, string format, string fileName)
+        {
+            Stream stream = new MemoryStream();
+            string contentType = "";
+            if (format == ".pdf")
+            {
+                contentType = "application/pdf";
+            }
+            else
+            {
+                WFormatType type = GetWFormatType(format);
+                switch (type)
+                {
+                    case WFormatType.Rtf:
+                        contentType = "application/rtf";
+                        break;
+                    case WFormatType.WordML:
+                        contentType = "application/xml";
+                        break;
+                    case WFormatType.Html:
+                        contentType = "application/html";
+                        break;
+                    case WFormatType.Dotx:
+                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.template";
+                        break;
+                    case WFormatType.Doc:
+                        contentType = "application/msword";
+                        break;
+                    case WFormatType.Dot:
+                        contentType = "application/msword";
+                        break;
+                }
+
+                document.Save(stream, type);
+            }
+
+            document.Close();
+            stream.Position = 0;
+            return new FileStreamResult(stream, contentType)
+            {
+                FileDownloadName = fileName
+            };
+        }
+
+        private string GetValue(IFormCollection data, string key)
+        {
+            if (data.ContainsKey(key))
+            {
+                string[] values = data[key];
+                if (values.Length > 0)
+                {
+                    return values[0];
+                }
+            }
+
+            return "";
+        }
+
+        private WDocument GetDocument(IFormCollection data)
+        {
+            Stream stream = new MemoryStream();
+            IFormFile file = data.Files[0];
+            file.CopyTo(stream);
+            stream.Position = 0;
+
+            WDocument document = new WDocument(stream, WFormatType.Docx);
+            stream.Dispose();
+            return document;
+        }
+
         async Task<MemoryStream> GetDocumentFromUrl(string url)
         {
             var client = new HttpClient();
@@ -278,139 +414,6 @@ namespace WordWebApplication.Controllers
                 default:
                     throw new NotSupportedException("EJ2 DocumentEditor does not support this file format.");
             }
-        }
-
-        [HttpPost]
-        [AcceptVerbs("Post")]
-        [EnableCors("AllowAllOrigins")]
-        [Route("Save")]
-        public void Save([FromBody] Models.DocumentEditorController.SaveParameter data)
-        {
-            string name = data.FileName;
-            string format = RetrieveFileType(name);
-            if (string.IsNullOrEmpty(name))
-            {
-                name = "Document1.doc";
-            }
-
-            WDocument document = WordDocument.Save(data.Content);
-            FileStream fileStream = new FileStream(name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            document.Save(fileStream, GetWFormatType(format));
-            document.Close();
-            fileStream.Close();
-        }
-
-        [HttpPost]
-        [AcceptVerbs("Post")]
-        [EnableCors("AllowAllOrigins")]
-        [Route("ExportSFDT")]
-        public FileStreamResult ExportSfdt([FromBody] Models.DocumentEditorController.SaveParameter data)
-        {
-            string name = data.FileName;
-            string format = RetrieveFileType(name);
-            if (string.IsNullOrEmpty(name))
-            {
-                name = "Document1.doc";
-            }
-
-            WDocument document = WordDocument.Save(data.Content);
-            return SaveDocument(document, format, name);
-        }
-
-        private string RetrieveFileType(string name)
-        {
-            int index = name.LastIndexOf('.');
-            string format = index > -1 && index < name.Length - 1 ? name.Substring(index) : ".doc";
-            return format;
-        }
-
-        [AcceptVerbs("Post")]
-        [HttpPost]
-        [EnableCors("AllowAllOrigins")]
-        [Route("Export")]
-        public FileStreamResult Export(IFormCollection data)
-        {
-            if (data.Files.Count == 0)
-                return null;
-            string fileName = this.GetValue(data, "filename");
-            string name = fileName;
-            string format = RetrieveFileType(name);
-            if (string.IsNullOrEmpty(name))
-            {
-                name = "Document1";
-            }
-
-            WDocument document = this.GetDocument(data);
-            return SaveDocument(document, format, fileName);
-        }
-
-        private FileStreamResult SaveDocument(WDocument document, string format, string fileName)
-        {
-            Stream stream = new MemoryStream();
-            string contentType = "";
-            if (format == ".pdf")
-            {
-                contentType = "application/pdf";
-            }
-            else
-            {
-                WFormatType type = GetWFormatType(format);
-                switch (type)
-                {
-                    case WFormatType.Rtf:
-                        contentType = "application/rtf";
-                        break;
-                    case WFormatType.WordML:
-                        contentType = "application/xml";
-                        break;
-                    case WFormatType.Html:
-                        contentType = "application/html";
-                        break;
-                    case WFormatType.Dotx:
-                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.template";
-                        break;
-                    case WFormatType.Doc:
-                        contentType = "application/msword";
-                        break;
-                    case WFormatType.Dot:
-                        contentType = "application/msword";
-                        break;
-                }
-
-                document.Save(stream, type);
-            }
-
-            document.Close();
-            stream.Position = 0;
-            return new FileStreamResult(stream, contentType)
-            {
-                FileDownloadName = fileName
-            };
-        }
-
-        private string GetValue(IFormCollection data, string key)
-        {
-            if (data.ContainsKey(key))
-            {
-                string[] values = data[key];
-                if (values.Length > 0)
-                {
-                    return values[0];
-                }
-            }
-            return "";
-        }
-
-        private WDocument GetDocument(IFormCollection data)
-        {
-            Stream stream = new MemoryStream();
-            IFormFile file = data.Files[0];
-            file.CopyTo(stream);
-            stream.Position = 0;
-
-            WDocument document = new WDocument(stream, WFormatType.Docx);
-            stream.Dispose();
-            return document;
         }
     }
 }
