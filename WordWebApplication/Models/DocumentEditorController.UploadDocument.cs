@@ -1,4 +1,4 @@
-﻿namespace WordWebApplication.Controllers
+﻿namespace WordWebApplication.Models
 {
     public partial class DocumentEditorController
     {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Syncfusion.EJ2.DocumentEditor;
 using Syncfusion.EJ2.SpellChecker;
 using WordWebApplication.Models;
@@ -18,17 +19,17 @@ namespace WordWebApplication.Controllers
     [Route("api/[controller]")]
     public partial class DocumentEditorController : Controller
     {
-        private readonly IWebHostEnvironment _hostingEnvironment;
-        private List<DictionaryData> _spellDictionary;
-        private string _personalDictPath;
-        private string _path;
+        private readonly IHostEnvironment _hostingEnvironment;
+        private readonly List<DictionaryData> _spellDictionary;
+        private readonly string _personalDictPath;
+        private readonly string _path;
 
-        public DocumentEditorController(IWebHostEnvironment hostingEnvironment)
+        public DocumentEditorController(IHostEnvironment hostingEnvironment)
         {
             _hostingEnvironment = hostingEnvironment;
-            _spellDictionary = Startup.spellDictCollection;
-            _path = Startup.path;
-            _personalDictPath = Startup.personalDictPath;
+            _spellDictionary = Startup.SpellDictCollection;
+            _path = Startup.Path;
+            _personalDictPath = Startup.PersonalDictPath;
         }
 
         [HttpPost]
@@ -37,8 +38,7 @@ namespace WordWebApplication.Controllers
         [Route("Import")]
         public string Import(IFormCollection data)
         {
-            if (data.Files.Count == 0)
-                return null;
+            if (data.Files.Count == 0) return null;
             Stream stream = new MemoryStream();
             IFormFile file = data.Files[0];
             int index = file.FileName.LastIndexOf('.');
@@ -97,19 +97,20 @@ namespace WordWebApplication.Controllers
             MemoryStream stream = new MemoryStream();
             stream.Write(data, 0, data.Length);
             stream.Position = 0;
+            
             try
             {
-                Syncfusion.DocIO.DLS.WordDocument document =
-                    new Syncfusion.DocIO.DLS.WordDocument(stream, Syncfusion.DocIO.FormatType.Docx);
+                Syncfusion.DocIO.DLS.WordDocument document = new Syncfusion
+                    .DocIO.DLS.WordDocument(stream, Syncfusion.DocIO.FormatType.Docx);
                 document.MailMerge.RemoveEmptyGroup = true;
                 document.MailMerge.RemoveEmptyParagraphs = true;
                 document.MailMerge.ClearFields = true;
-                document.MailMerge.Execute(CustomerDataModel.GetAllRecords());
+                document.MailMerge.Execute(Models.DocumentEditorController.CustomerDataModel.GetAllRecords());
                 document.Save(stream, Syncfusion.DocIO.FormatType.Docx);
             }
             catch (Exception ex)
             {
-                
+                Console.WriteLine(ex);
             }
 
             string sfdtText = "";
@@ -119,102 +120,6 @@ namespace WordWebApplication.Controllers
             document1.Dispose();
             return sfdtText;
         }
-
-        public class CustomerDataModel
-        {
-            public static List<Customer> GetAllRecords()
-            {
-                List<Customer> customers = new List<Customer>();
-                customers.Add(new Customer("9072379", "50%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "2000", "19072379", "Folk och fä HB", "100000", "440", "32.34", "472.34",
-                    "28023", "12000", "2020-11-07 00:00:00", "2020-12-07 00:00:00"));
-                customers.Add(new Customer("9072378", "20%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "", "2", "19072369", "Maersk", "140000", "245", "20", "265", "28024", "12400",
-                    "2020-11-31 00:00:00", "2020-12-22300:00:00"));
-                customers.Add(new Customer("9072377", "30%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "100", "19072879", "Mediterranean Shipping Company", "104000", "434", "50.43",
-                    "484.43", "28025", "10000", "2020-11-07 00:00:00", "2020-12-02 00:00:00"));
-                customers.Add(new Customer("9072393", "10%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "2050", "19072378", "China Ocean Shipping Company", "175000", "500", "32",
-                    "532", "28026", "17000", "2020-09-23 00:00:00", "2020-10-09 00:00:00"));
-                customers.Add(new Customer("9072377", "14%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "2568", "19072380", "CGM", "155000", "655", "20.54", "675.54", "28027",
-                    "13000", "2020-10-11 00:00:00", "2020-11-17 00:00:00"));
-                customers.Add(new Customer("9072376", "0%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00", "Spain",
-                    "Brittania", "1532", "19072345", " Hapag-Lloyd", "106500", "344", "30", "374", "28028", "14500",
-                    "2020-06-17 00:00:00", "2020-07-07 00:00:00"));
-                customers.Add(new Customer("9072369", "05%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "4462", "190723452", "Ocean Network Express", "100054", "541", "50", "591",
-                    "28029", "16500", "2020-04-07 00:00:00", "2020-05-07 00:00:00"));
-                customers.Add(new Customer("9072359", "4%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00", "Spain",
-                    "Brittania", "27547", "190723713", "Evergreen Line", "124000", "800", "10.23", "810.23", "28030",
-                    "12500", "2020-03-07 00:00:00", "2020-04-07 00:00:00"));
-                customers.Add(new Customer("9072380", "20%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "7582", "19072312", "Yang Ming Marine Transport", "1046000", "290", "10",
-                    "300", "27631", "12670", "2020-11-10 00:00:00", "2020-12-13 00:00:00"));
-                customers.Add(new Customer("9072381", "42%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "862", "19072354", "Hyundai Merchant Marine", "145000", "800", "10.23",
-                    "810.23", "28032", "45000", "2020-10-17 00:00:00", "2020-12-23 00:00:00"));
-                customers.Add(new Customer("9072391", "84%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "82", "19072364", "Pacific International Line", "10094677", "344", "30",
-                    "374", "28033", "16500", "2020-11-14 00:00:00", "2020-12-21 00:00:00"));
-                customers.Add(new Customer("9072392", "92%", "C/ Araquil, 67", "Madrid", "22020-08-10 00:00:00",
-                    "Spain", "Brittania", "82", "19072385", "Österreichischer Lloyd", "104270", "500", "32", "532",
-                    "28034", "156500", "2020-06-07 00:00:00", "2020-07-07 00:00:00"));
-                return customers;
-            }
-        }
-
-        public class Customer
-        {
-            public string CustomerId { get; set; }
-            public string ProductName { get; set; }
-            public string Quantity { get; set; }
-            public string ShipName { get; set; }
-            public string UnitPrice { get; set; }
-            public string Discount { get; set; }
-            public string ShipAddress { get; set; }
-            public string ShipCity { get; set; }
-            public string OrderDate { get; set; }
-            public string ShipCountry { get; set; }
-            public string OrderId { get; set; }
-            public string Subtotal { get; set; }
-            public string Freight { get; set; }
-            public string Total { get; set; }
-            public string ShipPostalCode { get; set; }
-            public string RequiredDate { get; set; }
-            public string ShippedDate { get; set; }
-            public string ExtendedPrice { get; set; }
-
-            public Customer(string orderId, string discount, string shipAddress, string shipCity, string orderDate,
-                string shipCountry, string productName, string quantity, string customerId, string shipName,
-                string unitPrice, string subtotal, string freight, string total, string shipPostalCode,
-                string extendedPrice, string requiredDate, string shippedDate)
-            {
-                this.CustomerId = customerId;
-                this.ProductName = productName;
-                this.Quantity = quantity;
-                this.ShipName = shipName;
-                this.UnitPrice = unitPrice;
-                this.Discount = discount;
-                this.ShipAddress = shipAddress;
-                this.ShipCity = shipCity;
-                this.OrderDate = orderDate;
-                this.ShipCountry = shipCountry;
-                this.OrderId = orderId;
-                this.Subtotal = subtotal;
-                this.Freight = freight;
-                this.Total = total;
-                this.ShipPostalCode = shipPostalCode;
-                this.ShippedDate = shippedDate;
-                this.RequiredDate = requiredDate;
-                this.ExtendedPrice = extendedPrice;
-            }
-        }
-
-        
-
-        
         
         [AcceptVerbs("Post")]
         [HttpPost]
@@ -222,7 +127,7 @@ namespace WordWebApplication.Controllers
         [Route("SystemClipboard")]
         public string SystemClipboard([FromBody] Models.DocumentEditorController.CustomParameter param)
         {
-            if (param.Content != null && param.Content != "")
+            if (!string.IsNullOrEmpty(param.Content))
             {
                 try
                 {
@@ -251,7 +156,6 @@ namespace WordWebApplication.Controllers
             return WordDocument.ComputeHash(param.PasswordBase64, param.SaltBase64, param.SpinCount);
         }
 
-
         [AcceptVerbs("Post")]
         [HttpPost]
         [EnableCors("AllowAllOrigins")]
@@ -271,7 +175,7 @@ namespace WordWebApplication.Controllers
         [HttpPost]
         [EnableCors("AllowAllOrigins")]
         [Route("LoadDocument")]
-        public string LoadDocument([FromForm] UploadDocument uploadDocument)
+        public string LoadDocument([FromForm] Models.DocumentEditorController.UploadDocument uploadDocument)
         {
             string documentPath = Path.Combine(_path, uploadDocument.DocumentName);
             Stream stream = null;
@@ -376,11 +280,11 @@ namespace WordWebApplication.Controllers
             }
         }
 
-        [AcceptVerbs("Post")]
         [HttpPost]
+        [AcceptVerbs("Post")]
         [EnableCors("AllowAllOrigins")]
         [Route("Save")]
-        public void Save([FromBody] SaveParameter data)
+        public void Save([FromBody] Models.DocumentEditorController.SaveParameter data)
         {
             string name = data.FileName;
             string format = RetrieveFileType(name);
@@ -396,11 +300,11 @@ namespace WordWebApplication.Controllers
             fileStream.Close();
         }
 
-        [AcceptVerbs("Post")]
         [HttpPost]
+        [AcceptVerbs("Post")]
         [EnableCors("AllowAllOrigins")]
         [Route("ExportSFDT")]
-        public FileStreamResult ExportSfdt([FromBody] SaveParameter data)
+        public FileStreamResult ExportSfdt([FromBody] Models.DocumentEditorController.SaveParameter data)
         {
             string name = data.FileName;
             string format = RetrieveFileType(name);
@@ -418,12 +322,6 @@ namespace WordWebApplication.Controllers
             int index = name.LastIndexOf('.');
             string format = index > -1 && index < name.Length - 1 ? name.Substring(index) : ".doc";
             return format;
-        }
-
-        public class SaveParameter
-        {
-            public string Content { get; set; }
-            public string FileName { get; set; }
         }
 
         [AcceptVerbs("Post")]
@@ -500,7 +398,6 @@ namespace WordWebApplication.Controllers
                     return values[0];
                 }
             }
-
             return "";
         }
 

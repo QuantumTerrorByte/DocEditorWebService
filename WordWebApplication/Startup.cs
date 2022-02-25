@@ -1,22 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Edm;
-using Microsoft.AspNet.OData.Builder;
-using Microsoft.AspNet.OData.Extensions;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.OData.UriParser;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using EJ2APIServices.Models;
-using EJ2APIServices.Controllers;
 using Syncfusion.EJ2.SpellChecker;
 using System.IO;
 using Microsoft.Extensions.Hosting;
@@ -27,14 +14,13 @@ namespace WordWebApplication
 {
     public class Startup
     {
-        private string _contentRootPath = "";
-        internal static List<DictionaryData> spellDictCollection;
-        internal static string path;
-        internal static string personalDictPath;
+        private string _contentRootPath;
+        internal static List<DictionaryData> SpellDictCollection;
+        internal static string Path;
+        internal static string PersonalDictPath;
         private IConfiguration Configuration { get; }
 
-
-        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        public Startup(IConfiguration configuration, IHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -42,48 +28,45 @@ namespace WordWebApplication
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
 
-            Configuration = builder.Build();
             _contentRootPath = env.ContentRootPath;
+            Configuration = builder.Build();
 
-            path = Configuration["SPELLCHECK_DICTIONARY_PATH"];
+            Path = Configuration["SPELLCHECK_DICTIONARY_PATH"];
             string jsonFileName = Configuration["SPELLCHECK_JSON_FILENAME"];
-            //check the spell check dictionary path environment variable value and assign default data folder
-            //if it is null.
-            path = string.IsNullOrEmpty(path)
-                ? Path.Combine(env.ContentRootPath, "App_Data")
-                : Path.Combine(env.ContentRootPath, path);
+            // check the spell check dictionary path environment variable value and assign default data folder
+            // if it is null.
+            Path = string.IsNullOrEmpty(Path)
+                ? System.IO.Path.Combine(env.ContentRootPath, "App_Data")
+                : System.IO.Path.Combine(env.ContentRootPath, Path);
             //Set the default spellcheck.json file if the json filename is empty.
             jsonFileName = string.IsNullOrEmpty(jsonFileName)
-                ? Path.Combine(path, "spellcheck.json")
-                : Path.Combine(path, jsonFileName);
-            
+                ? System.IO.Path.Combine(Path, "spellcheck.json")
+                : System.IO.Path.Combine(Path, jsonFileName);
+
             if (File.Exists(jsonFileName))
             {
                 string jsonImport = File.ReadAllText(jsonFileName);
                 List<DictionaryData> spellChecks = JsonConvert.DeserializeObject<List<DictionaryData>>(jsonImport);
-                spellDictCollection = new List<DictionaryData>();
+                SpellDictCollection = new List<DictionaryData>();
                 //construct the dictionary file path using customer provided path and dictionary name
                 foreach (var spellCheck in spellChecks)
                 {
-                    spellDictCollection.Add(new DictionaryData(spellCheck.LanguadeID,
-                        Path.Combine(path, spellCheck.DictionaryPath), Path.Combine(path, spellCheck.AffixPath)));
-                    personalDictPath = Path.Combine(path, spellCheck.PersonalDictPath);
+                    SpellDictCollection.Add(new DictionaryData(spellCheck.LanguadeID,
+                        System.IO.Path.Combine(Path, spellCheck.DictionaryPath),
+                        System.IO.Path.Combine(Path, spellCheck.AffixPath)));
+                    PersonalDictPath = System.IO.Path.Combine(Path, spellCheck.PersonalDictPath);
                 }
             }
         }
 
-
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<AppDbContext>(o =>
-                o.UseSqlServer("Server=NONAME;Database=docsEditor;User Id=sa;Password=sa"));
+                o.UseSqlServer("Server=NONAME;Database=docsEditorScaffold;User Id=sa;Password=sa"));
+            services.AddTransient<AppDbContext, AppDbContext>();
             services.AddCors();
             services.AddControllersWithViews();
-            services.AddOData();
-            services.AddMvc().AddJsonOptions(x => {
-                x.SerializerSettings.ContractResolver = null;
-            });
-
+            services.AddMvc();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAllOrigins", builder =>
@@ -93,24 +76,21 @@ namespace WordWebApplication
                         .AllowAnyHeader();
                 });
             });
-            string connection = Configuration.GetConnectionString("Test");
-            if (connection.Contains("%CONTENTROOTPATH%"))
-            {
-                connection = connection.Replace("%CONTENTROOTPATH%", _contentRootPath);
-
-            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseCors(builder => builder
+                .AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().DisallowCredentials()
+            );
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
 
@@ -118,19 +98,13 @@ namespace WordWebApplication
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseCors(builder => builder
-                .AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().DisallowCredentials()
-            );
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); });
         }
     }
-    
+
     public class ServerPath
     {
         public static string MapPath = "";

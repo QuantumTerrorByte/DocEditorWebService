@@ -16,6 +16,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
         <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="19.4.0.53" />
         <PackageReference Include="Syncfusion.EJ2.AspNet.Core" Version="19.4.0.53" />
         <PackageReference Include="Syncfusion.EJ2.SpellChecker.AspNet.Core" Version="19.4.0.53" />
@@ -34,10 +35,6 @@
 
     <ItemGroup>
         <Folder Include="wwwroot\files" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
     </ItemGroup>
 
     <ItemGroup>

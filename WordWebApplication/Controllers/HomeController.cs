@@ -25,7 +25,12 @@ namespace WordWebApplication.Controllers
             _environment = environment;
             _dbContext = dbContext;
         }
-
+        
+        public IActionResult Index()
+        {
+            return View(_dbContext.DiagramsData);
+        }
+        
         [HttpPost]
         [Route("ConvertFile")]
         public IActionResult ConvertFile(IFormCollection data)
